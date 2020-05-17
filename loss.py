@@ -24,4 +24,4 @@ class Loss(loss._Loss):
             Triplet_Loss.data.cpu().numpy(),
             CrossEntropy_Loss.data.cpu().numpy()),
               end=' ')
-        return loss_sum
+        return loss_sum, Triplet_Loss, CrossEntropy_Loss

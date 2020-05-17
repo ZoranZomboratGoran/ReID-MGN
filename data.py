@@ -29,16 +29,38 @@ class Data():
         self.queryset = Market1501(test_transform, 'query', opt.data_path)
 
         self.train_loader = dataloader.DataLoader(self.trainset,
-                                                  sampler=RandomSampler(self.trainset, batch_id=opt.batchid,
-                                                                        batch_image=opt.batchimage),
-                                                  batch_size=opt.batchid * opt.batchimage, num_workers=8,
-                                                  pin_memory=True)
-        self.test_loader = dataloader.DataLoader(self.testset, batch_size=opt.batchtest, num_workers=8, pin_memory=True)
-        self.query_loader = dataloader.DataLoader(self.queryset, batch_size=opt.batchtest, num_workers=8,
-                                                  pin_memory=True)
+                                                sampler=RandomSampler(
+                                                    self.trainset,
+                                                    batch_id=opt.batchid,
+                                                    batch_image=opt.batchimage),
+                                                batch_size=opt.batchid * opt.batchimage,
+                                                num_workers=8,
+                                                drop_last=True,
+                                                pin_memory=True)
 
-        if opt.mode == 'vis':
-            self.query_image = test_transform(default_loader(opt.query_image))
+        self.train_val_loader = dataloader.DataLoader(self.testset,
+                                        sampler=RandomSampler(
+                                            self.testset,
+                                            batch_id=opt.batchid,
+                                            batch_image=opt.batchimage),
+                                        batch_size=opt.batchid * opt.batchimage,
+                                        num_workers=8,
+                                        drop_last=True,
+                                        pin_memory=True)
+
+        self.test_loader = dataloader.DataLoader(self.testset,
+                                                batch_size=opt.batchtest,
+                                                num_workers=8,
+                                                drop_last=True,
+                                                pin_memory=True)
+        self.query_loader = dataloader.DataLoader(self.queryset,
+                                                batch_size=opt.batchtest,
+                                                num_workers=8,
+                                                drop_last=True,
+                                                pin_memory=True)
+
+        self.query_image_path = os.path.join(opt.data_path, "query", opt.query_image)
+        self.query_image = test_transform(default_loader(self.query_image_path))
 
 
 class Market1501(dataset.Dataset):

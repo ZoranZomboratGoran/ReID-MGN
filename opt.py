@@ -7,7 +7,7 @@ parser.add_argument('--data_path',
                     help='path of Market-1501-v15.09.15')
 
 parser.add_argument('--mode',
-                    default='train', choices=['train', 'evaluate', 'vis'],
+                    default='train', choices=['train', 'evaluate', 'visualize'],
                     help='train or evaluate ')
 
 parser.add_argument('--query_image',
@@ -23,8 +23,14 @@ parser.add_argument('--weight',
                     help='load weights ')
 
 parser.add_argument('--epoch',
-                    default=500,
+                    default=400,
+                    type=int,
                     help='number of epoch to train')
+
+parser.add_argument('--resume_epoch',
+                    default=-1,
+                    type=int,
+                    help='epoch from which to resume training')
 
 parser.add_argument('--lr',
                     default=2e-4,
@@ -36,14 +42,32 @@ parser.add_argument('--lr_scheduler',
 
 parser.add_argument("--batchid",
                     default=4,
+                    type=int,
                     help='the batch for id')
 
 parser.add_argument("--batchimage",
                     default=4,
+                    type=int,
                     help='the batch of per id')
 
 parser.add_argument("--batchtest",
                     default=8,
+                    type=int,
                     help='the batch size for test')
+
+parser.add_argument("--savefreq",
+                    default=10,
+                    type=int,
+                    help='the epoch frequency of saving weights')
+
+parser.add_argument("--evalfreq",
+                    default=10,
+                    type=int,
+                    help='the epoch frequency of evaluating model precision')
+
+parser.add_argument("--usecpu",
+                    default=False,
+                    type=bool,
+                    help='run train and evaluation on cpu')
 
 opt = parser.parse_args()
