@@ -51,12 +51,11 @@ class Data():
         self.test_loader = dataloader.DataLoader(self.testset,
                                                 batch_size=opt.batchtest,
                                                 num_workers=8,
-                                                drop_last=True,
                                                 pin_memory=True)
+
         self.query_loader = dataloader.DataLoader(self.queryset,
                                                 batch_size=opt.batchtest,
                                                 num_workers=8,
-                                                drop_last=True,
                                                 pin_memory=True)
 
         self.query_image_path = os.path.join(opt.data_path, "query", opt.query_image)
