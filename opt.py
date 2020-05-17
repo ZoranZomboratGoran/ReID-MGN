@@ -23,7 +23,7 @@ parser.add_argument('--weight',
                     help='load weights ')
 
 parser.add_argument('--epoch',
-                    default=400,
+                    default=200,
                     type=int,
                     help='number of epoch to train')
 
@@ -37,7 +37,7 @@ parser.add_argument('--lr',
                     help='initial learning_rate')
 
 parser.add_argument('--lr_scheduler',
-                    default=[320, 380],
+                    default=[160, 190],
                     help='MultiStepLR,decay the learning rate')
 
 parser.add_argument("--batchid",
@@ -69,5 +69,10 @@ parser.add_argument("--usecpu",
                     default=False,
                     type=bool,
                     help='run train and evaluation on cpu')
+
+parser.add_argument("--log_dir",
+                    default="log",
+                    type=str,
+                    help='directotry for tensorboard logging')
 
 opt = parser.parse_args()

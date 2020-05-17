@@ -4,9 +4,13 @@ from torch.optim import lr_scheduler
 from opt import opt
 from utils.get_optimizer import get_optimizer
 from utils.extract_feature import extract_feature
+from torch.utils.tensorboard import SummaryWriter
 
 class App():
     def __init__(self, model, loss, data):
+
+        # Writer will output to ./runs/ directory by default
+        self.writer = SummaryWriter(opt.log_dir)
         self.data = data
         self.train_loader = data.train_loader
         self.train_val_loader = data.train_val_loader

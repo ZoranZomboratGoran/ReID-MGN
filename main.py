@@ -32,3 +32,5 @@ if __name__ == '__main__':
 
     if opt.mode == 'visualize':
         visualize(app)
+
+    app.writer.close()

@@ -100,14 +100,17 @@ def train_model(app):
         # Each epoch has a training and validation phase
         for phase in phases:
 
+            running_loss = {}
+            running_loss['total'] = 0
+            running_loss['triplet'] = 0
+            running_loss['ce'] = 0
+
             if phase == 'train':
                 app.model.train(True)  # Set model to training mode
             else:
                 app.model.train(False)  # Set model to evaluate mode
 
-            batch = 0
-
-            for _, (inputs, labels) in enumerate(loaders[phase]):
+            for batch, (inputs, labels) in enumerate(loaders[phase]):
 
                 if opt.usecpu == False and torch.cuda.is_available():
                     inputs = inputs.cuda()
@@ -126,21 +129,42 @@ def train_model(app):
                 # compute inference loss
                 loss_sum, triplet_loss, ce_loss = app.loss(outputs, labels)
 
+                # Log loss per mini batch
+                batch_epoch_idx = (epoch - 1) * len(loaders[phase]) + batch
+                app.writer.add_scalar('total_loss/batch/%s' % phase,
+                                    loss_sum.data.cpu().numpy(), batch_epoch_idx)
+                running_loss['total'] += loss_sum.data.cpu().numpy()
+                app.writer.add_scalar('triplet_loss/batch/%s' % phase,
+                                    triplet_loss.data.cpu().numpy(), batch_epoch_idx)
+                running_loss['triplet'] += triplet_loss.data.cpu().numpy()
+                app.writer.add_scalar('ce_loss/batch/%s' % phase,
+                                    ce_loss.data.cpu().numpy(), batch_epoch_idx)
+                running_loss['ce'] += ce_loss.data.cpu().numpy()
+                app.writer.flush()
+
                 # back propagate the computed gradient
                 if phase == 'train':
                     loss_sum.backward()
                     app.optimizer.step()
                     app.scheduler.step()
 
-                batch = batch+1
-                if batch == 3:
-                    break
+            # Log loss per epoch
+            avg_total_loss = running_loss['total'] /  len(loaders[phase])
+            app.writer.add_scalar('total_loss/epoch/%s' % phase,
+                                avg_total_loss, epoch)
+            avg_triplet_loss = running_loss['triplet'] /  len(loaders[phase])
+            app.writer.add_scalar('triplet_loss/epoch/%s' % phase,
+                                avg_triplet_loss, epoch)
+            avg_ce_loss = running_loss['ce'] /  len(loaders[phase])
+            app.writer.add_scalar('ce_loss/epoch/%s' % phase,
+                                avg_ce_loss, epoch)
+            app.writer.flush()
 
-            print('%s_epoch_%d_loss:%.2f' % (
+            print('%s Total loss:%.2f  Triplet_Loss:%.2f  CE_Loss:%.2f' % (
                 phase,
-                epoch,
-                loss_sum.data.cpu().numpy()))
-
+                avg_total_loss,
+                avg_triplet_loss,
+                avg_ce_loss))
 
         if epoch % opt.savefreq == 0:
             save_network(
@@ -157,7 +181,7 @@ def train_model(app):
                     app.loss,
                     epoch)
 
-        if epoch % opt.validatefreq == 0:
+        if epoch % opt.evalfreq == 0 or epoch == 1:
             evaluate_model(app, epoch)
 
     save_network(

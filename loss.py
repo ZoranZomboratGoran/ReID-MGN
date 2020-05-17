@@ -19,9 +19,4 @@ class Loss(loss._Loss):
 
         loss_sum = Triplet_Loss + 2 * CrossEntropy_Loss
 
-        print('\rtotal loss:%.2f  Triplet_Loss:%.2f  CrossEntropy_Loss:%.2f' % (
-            loss_sum.data.cpu().numpy(),
-            Triplet_Loss.data.cpu().numpy(),
-            CrossEntropy_Loss.data.cpu().numpy()),
-              end=' ')
         return loss_sum, Triplet_Loss, CrossEntropy_Loss

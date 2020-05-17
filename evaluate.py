@@ -14,8 +14,9 @@ from scipy.spatial.distance import cdist
 def evaluate_model(app, epoch_label):
 
     app.model.train(False)
-    query_feature = extract_feature(app.model, tqdm(app.query_loader)).numpy()
-    gallery_feature = extract_feature(app.model, tqdm(app.test_loader)).numpy()
+    query_feature = extract_feature(app.model, app.query_loader).numpy()
+    gallery_feature_tensor = extract_feature(app.model, app.test_loader)
+    gallery_feature = gallery_feature_tensor.numpy()
 
     data = app.data
 
@@ -31,11 +32,17 @@ def evaluate_model(app, epoch_label):
     dist = cdist(query_feature, gallery_feature)
     r, m_ap = rank(dist)
 
-    print('[Without Re-Ranking] mAP: {:.4f} rank1: {:.4f} rank3: {:.4f} rank5: {:.4f} rank10: {:.4f}'
-            .format(m_ap, r[0], r[2], r[4], r[9]))
+    print("Epoch %s mAP: %.4f rank1: %.4f rank3: %.4f rank5: %.4f rank10: %.4f"
+          % (epoch_label ,m_ap, r[0], r[2], r[4], r[9]))
+
+    app.writer.add_scalar('mAP/epoch', m_ap, epoch_label)
+    app.writer.add_scalar('rank1/epoch', r[0], epoch_label)
+    app.writer.add_scalar('rank5/epoch', r[4], epoch_label)
+    app.writer.add_scalar('rank10/epoch', r[9], epoch_label)
+    app.writer.flush()
 
     # top 10 rank
-    single_query_feature = extract_feature(app.model, tqdm([(torch.unsqueeze(app.data.query_image, 0), 1)])).numpy()
+    single_query_feature = extract_feature(app.model, [(torch.unsqueeze(app.data.query_image, 0), 1)])
 
     gallery_path = data.testset.imgs
     gallery_label = data.testset.ids
@@ -44,7 +51,7 @@ def evaluate_model(app, epoch_label):
     # sort images
     single_query_feature = single_query_feature.view(-1, 1)
 
-    score = torch.mm(gallery_feature, single_query_feature)
+    score = torch.mm(gallery_feature_tensor, single_query_feature)
     score = score.squeeze(1).cpu()
     score = score.numpy()
 
@@ -82,10 +89,8 @@ def evaluate_rerank(app):
     app.model.load_state_dict(torch.load(opt.weight))
     app.model.eval()
 
-    print('extract features, this may take a few minutes')
-
-    gf = extract_feature(app.model, tqdm(app.test_loader)).numpy()
-    qf = extract_feature(app.model, tqdm(app.query_loader)).numpy()
+    gf = extract_feature(app.model, app.test_loader).numpy()
+    qf = extract_feature(app.model, app.query_loader).numpy()
 
     def rank(dist):
         r = cmc(dist, app.queryset.ids, app.testset.ids, app.queryset.cameras, app.testset.cameras,
