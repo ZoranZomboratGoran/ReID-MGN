@@ -97,16 +97,17 @@ def evaluate_rerank(app):
     load_network(app.model)
     app.model.eval()
 
-    gf = extract_feature(app.model, app.test_loader).numpy()
-    qf = extract_feature(app.model, app.query_loader).numpy()
+    gf = extract_feature(app.model, tqdm(app.test_loader)).numpy()
+    qf = extract_feature(app.model, tqdm(app.query_loader)).numpy()
+
+    data = app.data
 
     def rank(dist):
-        r = cmc(dist, app.queryset.ids, app.testset.ids, app.queryset.cameras, app.testset.cameras,
+        r = cmc(dist, data.queryset.ids, data.testset.ids, data.queryset.cameras, data.testset.cameras,
                 separate_camera_set=False,
                 single_gallery_shot=False,
                 first_match_break=True)
-        m_ap = mean_ap(dist, app.queryset.ids, app.testset.ids, app.queryset.cameras, app.testset.cameras)
-
+        m_ap = mean_ap(dist, data.queryset.ids, data.testset.ids, data.queryset.cameras, data.testset.cameras)
         return r, m_ap
 
     #########################   re rank##########################
