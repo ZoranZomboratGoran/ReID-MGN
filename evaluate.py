@@ -84,9 +84,17 @@ def evaluate_model(app, epoch_label):
     fig_filename = 'top10_%s.png' % epoch_label
     fig.savefig(os.path.join(images_dir, fig_filename))
 
+def load_network(model):
+
+    load_filename = opt.weight
+    checkpoint = torch.load(load_filename)
+    model.load_state_dict(checkpoint['model'])
+    if opt.usecpu == False and torch.cuda.is_available():
+        model.cuda()
+
 def evaluate_rerank(app):
 
-    app.model.load_state_dict(torch.load(opt.weight))
+    load_network(app.model)
     app.model.eval()
 
     gf = extract_feature(app.model, app.test_loader).numpy()

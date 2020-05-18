@@ -23,7 +23,7 @@ def load_network(model):
 def visualize(app):
 
     load_network(app.model)
-    app.model.train(False)
+    app.model.eval()
 
     gallery_path = app.data.testset.imgs
     gallery_label = app.data.testset.ids
