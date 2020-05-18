@@ -23,7 +23,7 @@ parser.add_argument('--weight',
                     help='load weights ')
 
 parser.add_argument('--epoch',
-                    default=200,
+                    default=400,
                     type=int,
                     help='number of epoch to train')
 
@@ -37,7 +37,7 @@ parser.add_argument('--lr',
                     help='initial learning_rate')
 
 parser.add_argument('--lr_scheduler',
-                    default=[160, 190],
+                    default=[320, 380],
                     help='MultiStepLR,decay the learning rate')
 
 parser.add_argument("--batchid",
@@ -51,7 +51,7 @@ parser.add_argument("--batchimage",
                     help='the batch of per id')
 
 parser.add_argument("--batchtest",
-                    default=8,
+                    default=10,
                     type=int,
                     help='the batch size for test')
 
