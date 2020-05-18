@@ -3,6 +3,7 @@ from utils.extract_feature import extract_feature
 from utils.metrics import mean_ap, cmc, re_ranking
 
 from tqdm import tqdm
+import os
 import numpy as np
 import matplotlib
 matplotlib.use('agg')
@@ -10,9 +11,18 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 import torch
 
+def load_network(model):
+
+    load_filename = opt.weight
+    checkpoint = torch.load(load_filename)
+    model.load_state_dict(checkpoint['model'])
+    if opt.usecpu == False and torch.cuda.is_available():
+        model.cuda()
+
+
 def visualize(app):
 
-    app.model.load_state_dict(torch.load(opt.weight))
+    load_network(app.model)
     app.model.train(False)
 
     gallery_path = app.data.testset.imgs
