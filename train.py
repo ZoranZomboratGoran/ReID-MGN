@@ -112,6 +112,7 @@ def train_model(app):
             else:
                 app.model.train(False)  # Set model to evaluate mode
             epoch_batch = 0
+
             for _, (inputs, labels) in enumerate(loaders[phase]):
 
                 if opt.usecpu == False and torch.cuda.is_available():
@@ -132,6 +133,7 @@ def train_model(app):
                 loss_sum, triplet_loss, ce_loss = app.loss(outputs, labels)
 
                 # Log loss per mini batch
+                epoch_batch = epoch_batch + 1
                 app.writer.add_scalar('total_loss/batch/%s' % phase,
                                     loss_sum.data.cpu().numpy(), hist_batch[phase])
                 running_loss['total'] += loss_sum.data.cpu().numpy()
@@ -141,6 +143,8 @@ def train_model(app):
                 app.writer.add_scalar('ce_loss/batch/%s' % phase,
                                     ce_loss.data.cpu().numpy(), hist_batch[phase])
                 running_loss['ce'] += ce_loss.data.cpu().numpy()
+                if phase == 'train' and epoch_batch % 100 == 0:
+                    print("%s e %d %.2f loss" % (phase, epoch_batch, running_loss['total'] / epoch_batch))
                 app.writer.flush()
 
                 # back propagate the computed gradient
@@ -149,14 +153,13 @@ def train_model(app):
                     app.optimizer.step()
                     app.scheduler.step()
 
-                epoch_batch = epoch_batch + 1
                 hist_batch[phase] = hist_batch[phase] + 1
 
             # Log loss per epoch
             avg_total_loss = running_loss['total'] /  epoch_batch
             app.writer.add_scalar('total_loss/epoch/%s' % phase,
                                 avg_total_loss, epoch)
-            avg_triplet_loss = running_loss['triplet'] /  len(loaders[phase])
+            avg_triplet_loss = running_loss['triplet'] /  epoch_batch
             app.writer.add_scalar('triplet_loss/epoch/%s' % phase,
                                 avg_triplet_loss, epoch)
             avg_ce_loss = running_loss['ce'] /  epoch_batch
