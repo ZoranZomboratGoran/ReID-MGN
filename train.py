@@ -90,12 +90,14 @@ def train_model(app):
                     opt.resume_epoch)
         start_epoch = opt.resume_epoch
 
+    phases = ['train', 'validate']
+    loaders = {}
+    loaders['train'] = app.train_loader
+    loaders['validate'] = app.train_val_loader
+    hist_batch = {}
+    hist_batch['train'] = 0
+    hist_batch['validate'] = 0
     for epoch in range(start_epoch, opt.epoch + 1):
-
-        phases = ['train', 'validate']
-        loaders = {}
-        loaders['train'] = app.train_loader
-        loaders['validate'] = app.train_val_loader
 
         # Each epoch has a training and validation phase
         for phase in phases:
@@ -109,8 +111,8 @@ def train_model(app):
                 app.model.train(True)  # Set model to training mode
             else:
                 app.model.train(False)  # Set model to evaluate mode
-
-            for batch, (inputs, labels) in enumerate(loaders[phase]):
+            epoch_batch = 0
+            for _, (inputs, labels) in enumerate(loaders[phase]):
 
                 if opt.usecpu == False and torch.cuda.is_available():
                     inputs = inputs.cuda()
@@ -130,15 +132,14 @@ def train_model(app):
                 loss_sum, triplet_loss, ce_loss = app.loss(outputs, labels)
 
                 # Log loss per mini batch
-                batch_epoch_idx = (epoch - 1) * len(loaders[phase]) + batch
                 app.writer.add_scalar('total_loss/batch/%s' % phase,
-                                    loss_sum.data.cpu().numpy(), batch_epoch_idx)
+                                    loss_sum.data.cpu().numpy(), hist_batch[phase])
                 running_loss['total'] += loss_sum.data.cpu().numpy()
                 app.writer.add_scalar('triplet_loss/batch/%s' % phase,
-                                    triplet_loss.data.cpu().numpy(), batch_epoch_idx)
+                                    triplet_loss.data.cpu().numpy(), hist_batch[phase])
                 running_loss['triplet'] += triplet_loss.data.cpu().numpy()
                 app.writer.add_scalar('ce_loss/batch/%s' % phase,
-                                    ce_loss.data.cpu().numpy(), batch_epoch_idx)
+                                    ce_loss.data.cpu().numpy(), hist_batch[phase])
                 running_loss['ce'] += ce_loss.data.cpu().numpy()
                 app.writer.flush()
 
@@ -148,19 +149,23 @@ def train_model(app):
                     app.optimizer.step()
                     app.scheduler.step()
 
+                epoch_batch = epoch_batch + 1
+                hist_batch[phase] = hist_batch[phase] + 1
+
             # Log loss per epoch
-            avg_total_loss = running_loss['total'] /  len(loaders[phase])
+            avg_total_loss = running_loss['total'] /  epoch_batch
             app.writer.add_scalar('total_loss/epoch/%s' % phase,
                                 avg_total_loss, epoch)
             avg_triplet_loss = running_loss['triplet'] /  len(loaders[phase])
             app.writer.add_scalar('triplet_loss/epoch/%s' % phase,
                                 avg_triplet_loss, epoch)
-            avg_ce_loss = running_loss['ce'] /  len(loaders[phase])
+            avg_ce_loss = running_loss['ce'] /  epoch_batch
             app.writer.add_scalar('ce_loss/epoch/%s' % phase,
                                 avg_ce_loss, epoch)
             app.writer.flush()
 
-            print('%s Total loss:%.2f  Triplet_Loss:%.2f  CE_Loss:%.2f' % (
+            print('Epoch %d Phase %s Total loss:%.2f  Triplet_Loss:%.2f  CE_Loss:%.2f' % (
+                epoch,
                 phase,
                 avg_total_loss,
                 avg_triplet_loss,

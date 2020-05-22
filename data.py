@@ -69,6 +69,7 @@ class Market1501(dataset.Dataset):
         self.loader = default_loader
         self.data_path = data_path
 
+        self.dtype = dtype
         if dtype == 'train':
             self.data_path += '/bounding_box_train'
         elif dtype == 'test':
